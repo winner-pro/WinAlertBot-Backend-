@@ -1,1 +1,4 @@
-flask
+python-telegram-bot==20.6
+requests
+schedule
+sqlite3  # Pas nécessaire si tu utilises le module intégré de Python
