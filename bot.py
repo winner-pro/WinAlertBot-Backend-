@@ -1,27 +1,39 @@
-import requests
-import time
+import logging
+from telegram import Update, ReplyKeyboardMarkup
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+from prédicteur import faire_prediction
+from config import BOT_TOKEN, MENU_OPTIONS
 
-BOT_TOKEN = ' 7893795650:AAGNMWS51L5PwCTrulgT7LH3Ghp80YMbdtM'
-CHAT_ID = ' 7893927170'
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO
+)
 
-BACKEND_URL = 'https://winalertbot-backend.onrender.com/predictions'
+etat_utilisateur = {}
 
-def envoyer_prediction(resultat):
-    try:
-        response = requests.post(BACKEND_URL, json={'result': resultat})
-        if response.status_code == 200:
-            print("✅ Prédiction envoyée avec succès")
-        else:
-            print(f"❌ Erreur d'envoi : {response.status_code}")
-    except Exception as e:
-        print(f"❌ Exception : {e}")
 
-def boucle_predictions():
-    while True:
-        
-        resultat = "WIN"  # ou "LOSE", ou toute autre logique IA ici
-        envoyer_prediction(resultat)
-        time.sleep(300)  # Toutes les 5 minutes
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    clavier = ReplyKeyboardMarkup(MENU_OPTIONS, one_time_keyboard=True, resize_keyboard=True)
+    await update.message.reply_text("Bienvenue sur WinAlert Bot ! Choisissez une option :", reply_markup=clavier)
+
+async def message_recu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    texte = update.message.text
+    chat_id = update.message.chat_id
+
+    if texte == "Prédiction":
+        prediction = faire_prediction()
+        await update.message.reply_text(f"Voici la prédiction actuelle :\n\n{prediction}")
+    else:
+        await update.message.reply_text("Option non reconnue. Tapez /start pour revenir au menu.")
+
+# Fonction principale
+def main():
+    application = Application.builder().token(BOT_TOKEN).build()
+
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_recu))
+
+    application.run_polling()
 
 if __name__ == "__main__":
-    boucle_predictions()
+    main()
