@@ -1,31 +1,27 @@
-from flask import Flask, request, jsonify
-from datetime import datetime
-import os
+import requests
+import time
 
-app = Flask(__name__)
-predictions = []
+BOT_TOKEN = ' 7893795650:AAGNMWS51L5PwCTrulgT7LH3Ghp80YMbdtM'
+CHAT_ID = ' 7893927170'
 
-@app.route('/')
-def index():
-    return "WinAlertBot est en ligne !"
+BACKEND_URL = 'https://winalertbot-backend.onrender.com/predictions'
 
-@app.route('/predictions', methods=['GET'])
-def get_predictions():
-    return jsonify(predictions[-20:])
+def envoyer_prediction(resultat):
+    try:
+        response = requests.post(BACKEND_URL, json={'result': resultat})
+        if response.status_code == 200:
+            print("✅ Prédiction envoyée avec succès")
+        else:
+            print(f"❌ Erreur d'envoi : {response.status_code}")
+    except Exception as e:
+        print(f"❌ Exception : {e}")
 
-@app.route('/predictions', methods=['POST'])
-def add_prediction():
-    data = request.json
-    if not data or 'result' not in data:
-        return jsonify({'error': 'Invalid input'}), 400
+def boucle_predictions():
+    while True:
+        
+        resultat = "WIN"  # ou "LOSE", ou toute autre logique IA ici
+        envoyer_prediction(resultat)
+        time.sleep(300)  # Toutes les 5 minutes
 
-    prediction = {
-        'time': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
-        'result': data['result']
-    }
-    predictions.append(prediction)
-    return jsonify({'message': 'Prediction added'}), 201
-
-if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+if __name__ == "__main__":
+    boucle_predictions()
